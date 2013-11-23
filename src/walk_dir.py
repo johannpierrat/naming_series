@@ -60,9 +60,7 @@ def walk_dir(root_dir):
                             % (re.sub("_", " ",serie_name),
                                season_num,
                                ep_num,
-                               re.sub('"',
-                                      "",
-                                      list_episode[season_num][ep_num]),
+                               list_episode[season_num][ep_num],
                                ext))
             except KeyError:
                 sys.stderr.write("season %d, episode %d\n"

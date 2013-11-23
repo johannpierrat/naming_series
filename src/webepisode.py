@@ -1,6 +1,7 @@
 import urllib2
 import re
 import sys
+from HTMLParser import HTMLParser
 from BeautifulSoup import BeautifulSoup
 
 def get_starting_season(soup):
@@ -16,6 +17,15 @@ def get_starting_season(soup):
             return 0
         for season_found in season_find.findall(str(found)):
             return int(re.findall("\d+", season_found)[0])
+
+def parse_title(title):
+    """ Parse the title from html format to file format """
+    parser = HTMLParser()
+
+    title = parser.unescape(title)
+    title = re.sub('"', "", title)
+
+    return title
 
 def get_list_episode(serie):
     """
@@ -45,7 +55,7 @@ def get_list_episode(serie):
                 attrs={'class':'vevent'}):
             soup_row = BeautifulSoup(str(row))
             title = soup_row.find('td', attrs={'class':'summary'}).text
-            res[season_num][episode_num] = title
+            res[season_num][episode_num] = parse_title(title)
             episode_num = episode_num + 1
         if episode_num > 1:
             season_num = season_num + 1
