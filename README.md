@@ -6,6 +6,9 @@ not be right or empty due to different format.
 I'm currently working to implement it for series without season
 eg: anime
 
+The output format will be has following:
+    `series name` -SXXEXX- `title`.`ext`
+
 It's been tested on the following Series:
   - Adventure Time
   - Breaking Bad

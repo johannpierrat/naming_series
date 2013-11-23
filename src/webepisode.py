@@ -46,7 +46,7 @@ def get_list_episode(serie):
 
     for table in soup_html.findAll(
             'table',
-            attrs={'class':'wikitable plainrowheaders'}):
+            attrs={'class':re.compile(r"\bwikitable\b.*")}):
         res[season_num] = {}
         episode_num = 1
         soup_table = BeautifulSoup(str(table))
@@ -64,7 +64,7 @@ def get_list_episode(serie):
 
 
 if __name__ == "__main__":
-    res = get_list_episode("community")
+    res = get_list_episode("Seinfeld")
     if res is not None:
         for season in res:
             for episode in res[season]:
