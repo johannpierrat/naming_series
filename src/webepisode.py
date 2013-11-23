@@ -1,10 +1,10 @@
-from BeautifulSoup import BeautifulSoup
 import urllib2
 import re
 import sys
+from BeautifulSoup import BeautifulSoup
 
 def get_starting_season(soup):
-    ''' Return the first season number '''
+    """ Return the first season number """
     season_find = re.compile("Season \d+", flags=re.IGNORECASE)
     pilot_find = re.compile("Pilot", flags=re.IGNORECASE)
 
@@ -18,21 +18,19 @@ def get_starting_season(soup):
             return int(re.findall("\d+", season_found)[0])
 
 def get_list_episode(serie):
-    '''
-    Get every episode title from the entered series 
+    """
+    Get every episode title from the entered series
     It uses wikipedia list of episode and does not work for some cases
-    '''
+    """
 
     url = "http://en.wikipedia.org/wiki/List_of_%s_episodes" % serie
-
     try:
         resp = urllib2.urlopen(url)
     except urllib2.HTTPError:
-        sys.stderr.write("Cannot open url %s" % url)
+        sys.stderr.write("Cannot open url %s\n" % url)
         return None
 
     res = {}
-
     soup_html = BeautifulSoup(resp)
     season_num = get_starting_season(soup_html)
 
@@ -55,12 +53,12 @@ def get_list_episode(serie):
     return res
 
 
-
 if __name__ == "__main__":
-    res = get_list_episode("adventure_time")
-    for season in res:
-        for episode in res[season]:
-            print(
-                    "season %d episode %d: %s"
-                    % (season, episode, res[season][episode])
-            )
+    res = get_list_episode("community")
+    if res is not None:
+        for season in res:
+            for episode in res[season]:
+                print(
+                        "season %d episode %d: %s"
+                        % (season, episode, res[season][episode])
+                )
