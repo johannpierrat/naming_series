@@ -47,12 +47,16 @@ def walk_dir(root_dir):
                                  % os.path.join(root,file_))
                 continue
             if season_num is None:
-                season_num, _ = get_episode_id(basename(root))
-                if season_num is None:
-                    sys.stderr.write("Season Number is not found for"
-                                     " file %s\n"
-                                     % os.path.join(root,file_))
-                    continue
+                # When there is no season
+                if len(list_episode) == 1:
+                    season_num = 1
+                else:
+                    season_num, _ = get_episode_id(basename(root))
+                    if season_num is None:
+                        sys.stderr.write("Season Number is not found for"
+                                         " file %s\n"
+                                         % os.path.join(root,file_))
+                        continue
 
             _, ext = os.path.splitext(file_)
             try:
@@ -68,8 +72,8 @@ def walk_dir(root_dir):
                 sys.stderr.write("Cannot find title for file %s\n"
                                  % file_)
                 continue
-            print("Moving file %s\n         -> %s"
-                  % (os.path.join(root, file_), os.path.join(root, new_file)))
+            print("Moving file %s" % os.path.join(root, file_))
+            print("         -> %s" % os.path.join(root, new_file))
             os.rename(os.path.join(root, file_), os.path.join(root, new_file))
 
 if __name__ == "__main__":

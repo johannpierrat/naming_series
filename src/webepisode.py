@@ -24,6 +24,7 @@ def parse_title(title):
 
     title = parser.unescape(title)
     title = re.sub('"', "", title)
+    title = re.sub('&', "and", title)
 
     return title
 
