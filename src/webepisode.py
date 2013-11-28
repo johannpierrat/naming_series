@@ -1,12 +1,13 @@
 import urllib2
 import re
 import sys
+import itertools
 from HTMLParser import HTMLParser
 from BeautifulSoup import BeautifulSoup
 
 def get_starting_season(soup):
     """ Return the first season number """
-    season_find = re.compile("Season \d+", flags=re.IGNORECASE)
+    season_find = re.compile("(?:serie?|Season)s? \d+", flags=re.IGNORECASE)
     pilot_find = re.compile("Pilot", flags=re.IGNORECASE)
 
     for found in soup.findAll(
@@ -24,26 +25,41 @@ def parse_title(title):
 
     title = parser.unescape(title)
     title = re.sub('"', "", title)
-    title = re.sub('&', "and", title)
 
     return title
 
-def get_list_episode(serie):
+def combination_word(word):
+    """ Creat iterator for every test for a single word """
+    word = word.lower()
+    for p in itertools.product(*[(0,1)] * len(word)):
+        yield ''.join(c.upper() if t else c for t,c in itertools.izip(p, word))
+
+
+def get_episode_list(serie):
     """
     Get every episode title from the entered series
     It uses wikipedia list of episode and does not work for some cases
     """
 
-    url = "http://en.wikipedia.org/wiki/List_of_%s_episodes" % serie
-    try:
-        resp = urllib2.urlopen(url)
-    except urllib2.HTTPError:
-        sys.stderr.write("Cannot open url %s\n" % url)
+    resp = None
+
+    for s in combination_word(serie):
+        url = "http://en.wikipedia.org/wiki/List_of_%s_episodes" % s
+        try:
+            resp = urllib2.urlopen(url.lower())
+            break
+        except urllib2.HTTPError:
+            pass
+
+    if resp is None:
+        sys.stderr.write("Unable to find information for serie %s\n" % serie)
         return None
 
     res = {}
     soup_html = BeautifulSoup(resp)
     season_num = get_starting_season(soup_html)
+    if season_num is None:
+        season_num = 1
 
     for table in soup_html.findAll(
             'table',
@@ -65,7 +81,7 @@ def get_list_episode(serie):
 
 
 if __name__ == "__main__":
-    res = get_list_episode("Seinfeld")
+    res = get_episode_list("it_crowds")
     if res is not None:
         for season in res:
             for episode in res[season]:
