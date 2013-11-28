@@ -1,15 +1,40 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 
 import os
 import sys
 import re
 import webepisode
 
+def get_season_episode(list_ep, ep_num):
+    """
+    Create the season number from a single episode number
+    >>> get_season_episode(100)
+    (3, 28)
+    """
+    season_num = 1
+    ep_num_or = ep_num
+    try:
+        while ep_num >= len(list_ep[season_num]):
+            ep_num = ep_num - len(list_ep[season_num])
+            season_num += 1
+    except KeyError:
+        sys.stderr.write("Episode number not in list %d\n" % ep_num_or)
+        return None, ep_num_or
+
+    return season_num, ep_num
+
+
 def get_episode_id(episode_name):
     """
     Extract the episode number and season number from the name
     episode_name -> season_num, episode_num
     Return None if one of those has not been found
+    >>> get_episode_id('test_S01E12')
+    (1, 12)
+    >>> get_episode_id('test season 1 episode 12')
+    (1, 12)
+    >>> get_episode_id('test 1x12')
+    (1, 12)
     """
     season_find = re.compile("(?:s|season)\s*\d+", re.IGNORECASE)
     episode_find = re.compile("(?:e|episode)\s*\d+", re.IGNORECASE)
@@ -33,7 +58,7 @@ def get_episode_id(episode_name):
 def walk_dir(root_dir):
     serie_name = re.sub("\s+", "_", os.path.basename(root_dir).lower())
 
-    list_episode = webepisode.get_list_episode(serie_name)
+    list_episode = webepisode.get_episode_list(serie_name)
     if list_episode is None:
         sys.stderr.write("List episode name was not found for series %s\n"
                          % serie_name)
