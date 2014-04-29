@@ -2,8 +2,34 @@ import urllib2
 import re
 import sys
 import itertools
+import string
 from HTMLParser import HTMLParser
 from BeautifulSoup import BeautifulSoup
+import multiprocessing
+import Queue
+
+class TestProcess(multiprocessing.Process):
+    def __init__(self, urls_queue, result_queue):
+        multiprocessing.Process.__init__(self)
+
+        self.urls = urls_queue
+        self.result = result_queue
+
+    def run(self):
+        while True:
+            try:
+                url = self.urls.get_nowait()
+            except Queue.Empty:
+                break
+
+            ret = urllib2.Request(url)
+
+            try:
+                res = urllib2.urlopen(ret)
+                self.result.put(url)
+            except (urllib2.HTTPError, urllib2.URLError):
+                pass
+
 
 def get_starting_season(soup):
     """ Return the first season number """
@@ -24,32 +50,50 @@ def parse_title(title):
     parser = HTMLParser()
 
     title = parser.unescape(title)
-    title = re.sub('"', "", title)
+    # We only take the first title in case there is multiple
+    title = title.split('""')[0]
+    title = re.sub('"', '', title)
 
     return title
 
 def combination_word(word):
     """ Creat iterator for every test for a single word """
-    word = word.lower()
-    for p in itertools.product(*[(0,1)] * len(word)):
-        yield ''.join(c.upper() if t else c for t,c in itertools.izip(p, word))
+    #Try every capitalization of everyword
+    words = [w if w.isupper() else w.lower() for w in word.split(' ')]
+    for p in itertools.product(*[(0,1)] * len(words)):
+        yield '_'.join(c.capitalize()
+                      if t else c for t, c in itertools.izip(p, words))
 
 
 def get_episode_list(serie):
     """
     Get every episode title from the entered series
-    It uses wikipedia list of episode and does not work for some cases
+    Note: It uses wikipedia list of episode and does not work for some cases
     """
 
     resp = None
 
+    url_queue = multiprocessing.Queue()
+    result_queue = multiprocessing.Queue()
+
+    num_proc = 0
     for s in combination_word(serie):
-        url = "http://en.wikipedia.org/wiki/List_of_%s_episodes" % s
-        try:
-            resp = urllib2.urlopen(url.lower())
-            break
-        except urllib2.HTTPError:
-            pass
+        url = "http://en.wikipedia.org/wiki/List_of_{}_episodes".format(
+                s
+        )
+        num_proc += 1
+        print url
+        url_queue.put(url)
+
+    num_proc = 9 if num_proc > 9 else num_proc
+    for i in xrange(num_proc):
+        test = TestProcess(url_queue, result_queue)
+        test.start()
+
+    while result_queue:
+        url = result_queue.get()
+        resp = urllib2.urlopen(url)
+        break
 
     if resp is None:
         sys.stderr.write("Unable to find information for serie %s\n" % serie)
@@ -72,7 +116,11 @@ def get_episode_list(serie):
                 attrs={'class':'vevent'}):
             soup_row = BeautifulSoup(str(row))
             title = soup_row.find('td', attrs={'class':'summary'}).text
-            res[season_num][episode_num] = parse_title(title)
+            res[season_num][episode_num] = (
+                    parse_title(title).encode(
+                            "ascii",
+                            "replace")
+                    )
             episode_num = episode_num + 1
         if episode_num > 1:
             season_num = season_num + 1
@@ -81,11 +129,12 @@ def get_episode_list(serie):
 
 
 if __name__ == "__main__":
-    res = get_episode_list("it_crowds")
+    res = get_episode_list("IT Crowd")
     if res is not None:
         for season in res:
             for episode in res[season]:
                 print(
-                        "season %d episode %d: %s"
-                        % (season, episode, res[season][episode])
+                        "season {} episode {}: {}".format(
+                                season, episode, res[season][episode]
+                        )
                 )

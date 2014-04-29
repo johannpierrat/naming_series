@@ -37,7 +37,7 @@ def get_episode_id(episode_name):
     (1, 12)
     """
     season_find = re.compile("(?:s|season)\s*\d+", re.IGNORECASE)
-    episode_find = re.compile("(?:e|episode)\s*\d+", re.IGNORECASE)
+    episode_find = re.compile("(?:e|episode|^)\s*\d+", re.IGNORECASE)
     season_x_episode_find = re.compile("\d+x\d+", re.IGNORECASE)
 
     season_num = None
@@ -56,7 +56,7 @@ def get_episode_id(episode_name):
     return season_num, episode_num
 
 def walk_dir(root_dir):
-    serie_name = re.sub("\s+", "_", os.path.basename(root_dir).lower())
+    serie_name = re.sub("\s+", "_", os.path.basename(root_dir))
 
     list_episode = webepisode.get_episode_list(serie_name)
     if list_episode is None:
@@ -76,7 +76,7 @@ def walk_dir(root_dir):
                 if len(list_episode) == 1:
                     season_num = 1
                 else:
-                    season_num, _ = get_episode_id(basename(root))
+                    season_num, _ = get_episode_id(os.path.basename(root))
                     if season_num is None:
                         sys.stderr.write("Season Number is not found for"
                                          " file %s\n"
