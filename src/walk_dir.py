@@ -45,10 +45,10 @@ def get_episode_id(episode_name):
 
     for season_found in season_find.findall(episode_name):
         season_num = int(re.findall("\d+", season_found)[0])
-        break
+
     for episode_found in episode_find.findall(episode_name):
         episode_num = int(re.findall("\d+", episode_found)[0])
-        break
+
     for both_found in season_x_episode_find.findall(episode_name):
         season_num = int(re.findall("\d+", both_found)[0])
         episode_num = int(re.findall("\d+", both_found)[1])
@@ -56,7 +56,7 @@ def get_episode_id(episode_name):
     return season_num, episode_num
 
 def walk_dir(root_dir):
-    serie_name = re.sub("\s+", "_", os.path.basename(root_dir))
+    serie_name = os.path.basename(root_dir)
 
     list_episode = webepisode.get_episode_list(serie_name)
     if list_episode is None:
@@ -91,6 +91,7 @@ def walk_dir(root_dir):
                                ep_num,
                                list_episode[season_num][ep_num],
                                ext))
+                new_file = re.sub("/", "-", new_file)
             except KeyError:
                 sys.stderr.write("season %d, episode %d\n"
                                  % (season_num, ep_num))

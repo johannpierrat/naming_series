@@ -82,7 +82,6 @@ def get_episode_list(serie):
                 s
         )
         num_proc += 1
-        print url
         url_queue.put(url)
 
     num_proc = 9 if num_proc > 9 else num_proc
@@ -129,7 +128,7 @@ def get_episode_list(serie):
 
 
 if __name__ == "__main__":
-    res = get_episode_list("IT Crowd")
+    res = get_episode_list("The Office (U.S)")
     if res is not None:
         for season in res:
             for episode in res[season]:
