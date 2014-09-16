@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import getopt
 import webepisode
 
 def get_season_episode(list_ep, ep_num):
@@ -38,7 +39,7 @@ def get_episode_id(episode_name):
     """
     season_find = re.compile("(?:s|season)\s*\d+", re.IGNORECASE)
     episode_find = re.compile("(?:e|episode|^)\s*\d+", re.IGNORECASE)
-    season_x_episode_find = re.compile("\d+x\d+", re.IGNORECASE)
+    season_x_episode_find = re.compile("\d+(?:x|\.|_)\d+", re.IGNORECASE)
 
     season_num = None
     episode_num = None
@@ -55,10 +56,17 @@ def get_episode_id(episode_name):
 
     return season_num, episode_num
 
-def walk_dir(root_dir):
-    serie_name = os.path.basename(root_dir)
+def walk_dir(root_dir, serie_name=None, verbose=False, start_season=None):
+    if serie_name is None:
+        serie_name = os.path.basename(root_dir)
+        if verbose:
+            print "Serie Name is {}".format(serie_name)
 
-    list_episode = webepisode.get_episode_list(serie_name)
+    list_episode = webepisode.get_episode_list(
+            serie_name,
+            verbose=verbose,
+            start_season=start_season
+    )
     if list_episode is None:
         sys.stderr.write("List episode name was not found for series %s\n"
                          % serie_name)
@@ -103,7 +111,29 @@ def walk_dir(root_dir):
             os.rename(os.path.join(root, file_), os.path.join(root, new_file))
 
 if __name__ == "__main__":
+    opts, args = getopt.getopt(sys.argv[1:], "n:s:v", ["name=", "start="])
+    serie_name = None
+    verbose = False
+    start_season = None
+
+    for opt, arg in opts:
+        if opt == "-n" or opt == "--name":
+            serie_name = arg
+        if opt == "-v":
+            verbose = True
+        if opt == "--start" or opt == "-s":
+            try:
+                start_season = int(arg)
+            except ValueError:
+                print "Wrong value for starting season"
+                sys.exit(42)
+
     if len(sys.argv) > 1:
-        walk_dir(sys.argv[1])
+        walk_dir(
+                args[0],
+                serie_name=serie_name,
+                verbose=verbose,
+                start_season=start_season
+        )
     else:
         print "Usage: %s serie_dir" % sys.argv[0]
